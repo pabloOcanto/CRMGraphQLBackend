@@ -1,23 +1,15 @@
 const {ApolloServer,gql} = require("apollo-server");
 const typeDefs = require("./db/schema");
 const resolvers = require("./db/resolvers");
+const conectarDB = require("./config/db"); 
 
 
-
+conectarDB();
 
 //servidor
 const server = new ApolloServer({
     typeDefs,
     resolvers,
-
-    
-    context: ()=> {
-        const idUser = 20;
-
-        return {
-            idUser
-        }
-    }
 });
 
 server.listen().then(({url})=>{
