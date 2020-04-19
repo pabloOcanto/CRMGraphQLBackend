@@ -1,13 +1,48 @@
+const Usuario = require("../models/Usuario")
+const bcryptjs = require("bcryptjs");
+
+
 const resolvers = {
+
+    //Query la parte de consultas
 
     //1 _ funciones mixta buscar info
     //2 argumentos en este caso input
     //3 contexto usado para validar token
     //4 info sobre la consulta actual.
     Query:{
-        obtenerCursos : (_,{input},ctx,info)=> {},
-        obtenerTecnologias: ()=> cursos
+        obtenerCursos : ()=> "algo",
+    },
+
+
+    //Mutations la parte de modificacion de datos.
+
+    Mutation:{
+        nuevoUsuario :async (_,{input})=>{
+
+            const {email,password} = input;
+
+            const usuarioExiste = await Usuario.findOne({email});
+
+            if (usuarioExiste){
+                throw new Error("usuario existe");
+            }
+
+            const salt =await bcryptjs.genSalt(10);
+
+            input.password = await bcryptjs.hash(password,salt);
+
+            try{
+                const usuario = new Usuario(input);
+                 usuario.save();
+                 return usuario;
+            }catch(error){
+                console.log("error en creacion "+error);
+            }
+
+        }
     }
+
 }
 
 module.exports = resolvers;
