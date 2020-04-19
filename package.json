@@ -1,0 +1,19 @@
+{
+  "name": "crmgraphql",
+  "version": "1.0.0",
+  "description": "curso de graphql",
+  "main": "index.js",
+  "scripts": {
+    "start": "node .",
+    "dev":"nodemon .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pablo Ocanto",
+  "license": "ISC",
+  "dependencies": {
+    "apollo-server": "^2.12.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.3"
+  }
+}
