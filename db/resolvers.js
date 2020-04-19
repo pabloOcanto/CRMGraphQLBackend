@@ -1,6 +1,16 @@
 const Usuario = require("../models/Usuario")
 const bcryptjs = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+require("dotenv").config({path : "variables.env"});
 
+
+const crearToken= (usuario,clave,expiresIn)=>{
+
+    const {id,email,password} = usuario;
+    const token = jwt.sign({id},clave,{expiresIn});
+    console.log(token);
+    return  token;
+}
 
 const resolvers = {
 
@@ -40,6 +50,26 @@ const resolvers = {
                 console.log("error en creacion "+error);
             }
 
+        },
+
+        authenticar: async (_,{input}) =>{
+            const {email,password} = input;
+
+            const existeUsuario = await Usuario.findOne({email});
+
+            if (!existeUsuario){
+                throw new Error ("usuario no existe");
+            }
+
+            const isValidPassword = await bcryptjs.compare(password,existeUsuario.password);
+            
+            if (!isValidPassword){
+                throw new Error ("password invalido");
+            }
+
+            return {
+                token:crearToken(existeUsuario,process.env.CLAVE_SECRETA,'3h')
+            }
         }
     }
 
