@@ -21,7 +21,10 @@ const resolvers = {
     //3 contexto usado para validar token
     //4 info sobre la consulta actual.
     Query:{
-        obtenerCursos : ()=> "algo",
+        obtenerUsuario : async (_,{token})=> {
+            const usuarioId = await jwt.verify(token,process.env.CLAVE_SECRETA);
+            return usuarioId;
+        }
     },
 
 
