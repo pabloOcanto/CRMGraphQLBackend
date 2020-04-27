@@ -1,5 +1,6 @@
-const Usuario = require("../models/Usuario")
-const Producto = require("../models/Producto")
+const Usuario = require("../models/Usuario");
+const Producto = require("../models/Producto");
+const Cliente = require("../models/Cliente");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 require("dotenv").config({path : "variables.env"});
@@ -55,7 +56,53 @@ const resolvers = {
             return producto;
 
             
+        },
+
+        //Clientes
+
+        obtenerClientes:async()=>{
+
+            try {
+                
+                const clientes = await Cliente.find({});
+
+                return clientes;
+            } catch (error) {
+                
+                console.log(error);
+            }
+
+        },
+
+
+        obtenerClientesVendedor:async(_,{},ctx)=>{
+
+            try {
+                const clientes = await Cliente.find({vendedor:ctx.usuario.id});
+                return clientes;
+            } catch (error) {
+                console.log(error);
+            }
+
+        },
+
+        obtenerCliente:async(_,{id},ctx)=>{
+            //verificar existencia
+
+            const cliente = await Cliente.findById(id);
+            if (!cliente){
+                throw new Error("el cliente no existe");
+            }
+
+            if (cliente.vendedor.toString() !== ctx.usuario.id){
+                throw new Error("No tiene credenciales");
+            }
+
+            return cliente;
+
         }
+
+
     },
 
 
@@ -163,6 +210,80 @@ const resolvers = {
             }catch(error){
                 console.log(error);
 
+            }
+
+        },
+
+        //Cliente
+
+        nuevoCliente:async(_,{input},ctx)=>{
+
+            console.log(ctx);
+
+            const {email} = input;
+
+            const existeCliente = await Cliente.findOne({email});
+
+            if (existeCliente){
+                throw new Error("Ya existe ese cliente");
+            }
+
+            const nuevoCliente = new Cliente(input);
+            nuevoCliente.vendedor = ctx.usuario.id;
+
+            try {
+                const resultado = await nuevoCliente.save();
+                return resultado;
+            } catch (error) {
+                console.log(error);
+            }
+        },
+
+        actualizarCliente:async (_,{id,input},ctx)=>{
+            //verficar existencia
+
+            try {
+                const cliente = await Cliente.findById(id);
+                if(!cliente){
+                    throw new Error("cliente no existe"); 
+                }
+    
+                //verificar vendedor
+    
+                if (cliente.vendedor.toString() !== ctx.usuario.id){
+                    throw new Error("no tiene credenciales");
+                }
+    
+                const clienteActualizado = await Cliente.findOneAndUpdate({_id:id},input,{new:true});
+
+                return clienteActualizado;
+            } catch (error) {
+                console.log(error);                
+            }
+
+
+
+        },
+
+        eliminarCliente:async (_,{id,input},ctx)=>{
+
+            try {
+                const cliente = await Cliente.findById(id);
+                if(!cliente){
+                    throw new Error("cliente no existe"); 
+                }
+    
+                //verificar vendedor
+    
+                if (cliente.vendedor.toString() !== ctx.usuario.id){
+                    throw new Error("no tiene credenciales");
+                }
+    
+                 await Cliente.findOneAndDelete({_id:id});
+
+                return "cliente eliminado "+id;
+            } catch (error) {
+                console.log(error);                
             }
 
         }
