@@ -1,6 +1,7 @@
 const Usuario = require("../models/Usuario");
 const Producto = require("../models/Producto");
 const Cliente = require("../models/Cliente");
+const Pedido = require("../models/Pedido");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 require("dotenv").config({path : "variables.env"});
@@ -100,8 +101,51 @@ const resolvers = {
 
             return cliente;
 
-        }
+        },
 
+        //pedidos
+        obtenerPedidos:async()=>{
+
+            try {
+                const pedidos = await Pedido.find({});
+                return pedidos;
+            } catch (error) {
+                console.log(error);
+            }
+            
+        },
+
+        obtenerPedidosVendedor:async(_,{},ctx)=>{
+
+            try {
+                const pedidos = await Pedido.find({vendedor:ctx.usuario.id});
+                return pedidos;
+            } catch (error) {
+                console.log(error);
+            }
+            
+        },
+
+
+        obtenerPedido:async(_,{id},ctx)=>{
+
+            try {
+                const pedido= await Pedido.findById(id);
+                if (!pedido){
+                    throw new Error("No hay pedido");
+                }
+                return pedido;
+
+            } catch (error) {
+                console.log(error);
+            }
+            
+        },
+
+        obtenerPedidosEstado:async(_,{estado},ctx)=>{
+            const pedidos = await Pedido.find({vendedor:ctx.usuario.id,estado});
+            return pedidos;
+        }
 
     },
 
@@ -182,6 +226,7 @@ const resolvers = {
                 if (!existeProducto){
                     throw new Error("no existe producto");
                 }
+
                 
                 const producto = await Producto.findOneAndUpdate({_id:id},input,{new:true});
                 return producto;
@@ -286,7 +331,145 @@ const resolvers = {
                 console.log(error);                
             }
 
+        },
+
+
+        //Pedido
+
+        nuevoPedido:async (_,{input},ctx)=>{
+            
+            try {
+                //verificar si cliente existe
+                console.log(input);
+
+                const {cliente,pedido}= input;
+
+                console.log(cliente);
+
+                const existeCliente = await Cliente.findById(cliente);
+
+                if (!existeCliente){
+                    throw new Error("cliente no existe")
+                }
+
+                console.log("vendedor "+existeCliente.vendedor);
+                console.log("usuario "+ctx.usuario.id);
+
+                //verificar que el pedido del cliente sea del vendedor que dio de alta
+
+                if (existeCliente.vendedor.toString() !== ctx.usuario.id){
+                    throw new Error("no tiene credenciales");
+                }
+
+
+                // dar de alta el pedido
+
+                for await (const articulo of pedido){
+
+                    const {id} = articulo;
+                    const producto = await Producto.findById(id);
+
+                    if (producto.existencia < articulo.cantidad){
+                        throw new Error(`No hay  cantidad suficiente para el articulo ${articulo.nombre}`);
+                    }else{
+                        producto.existencia = producto.existencia - articulo.cantidad;
+                        await producto.save();     
+                    }
+
+                }
+
+                const nuevoPedido = new Pedido(input);
+                nuevoPedido.vendedor=ctx.usuario.id;
+
+                const resultado= await nuevoPedido.save();
+
+                return resultado;
+
+            } catch (error) {
+                console.log(error);    
+            }            
+            
+        },
+
+        actualizarPedido:async(_,{id,input},ctx)=>{
+
+            try {
+
+                const existePedido = await Pedido.findById(id);
+
+                if (!existePedido){
+                    throw new Error("el pedido no existe");
+                }
+    
+                const {cliente} = input
+                
+                const existeCliente =  await Cliente.findById(cliente);
+    
+                if (!existeCliente){
+                    throw new Error ("cliente no existe");
+                }
+
+                console.log("vendedor "+existeCliente.vendedor);
+                console.log("usuario "+ctx.usuario.id);
+    
+                if (existeCliente.vendedor.toString() !== ctx.usuario.id || existePedido.vendedor.toString() !== ctx.usuario.id  ){
+                    throw new Error ("No tiene credenciales");
+                }
+    
+    
+                for await (const articulo of input.pedido){
+    
+                    const {id} = articulo;
+                    const producto = await Producto.findById(id);
+    
+                    if (producto.existencia < articulo.cantidad){
+                        throw new Error(`No hay  cantidad suficiente para el articulo ${articulo.nombre}`);
+                    }else{
+                        producto.existencia = producto.existencia - articulo.cantidad;
+                        await producto.save();     
+                    }
+    
+                }
+    
+                const nuevoPedido = await Pedido.findOneAndUpdate({_id:id},input,{new:true});
+    
+                return nuevoPedido;
+                
+            } catch (error) {
+                console.log(error);
+            }
+
+        },
+
+        eliminarPedido:async(_,{id},ctx)=>{
+
+            //verficar existencia del pedido
+
+            try {
+
+                const pedido = await Pedido.findById(id);
+                if(!pedido){
+                    throw new Error ("No existe pedido");
+                }
+                //verficar credenciales
+                if (pedido.vendedor.toString() !== ctx.usuario.id){
+                    throw new Error ("No tiene credenciales para eliminar el pedido");
+                }
+    
+                await Pedido.findOneAndDelete({_id:id});
+
+                return "peido eliminado";
+                
+            } catch (error) {
+                
+            }
+
+
         }
+
+
+
+
                
     }
 
