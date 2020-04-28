@@ -48,6 +48,16 @@ const typeDefs =gql`
         cantidad: Int
     }
 
+    type TopCliente{
+        cliente:[Cliente]
+        total:Float
+    }
+
+    type TopVendedores{
+        vendedor:[Usuario]
+        total:Float
+    }
+
  
     input AuthenticarInput{
         email:String
@@ -115,6 +125,11 @@ const typeDefs =gql`
         obtenerPedidosVendedor:[Pedido]
         obtenerPedido(id:ID!): Pedido
         obtenerPedidosEstado(estado:String):[Pedido]
+
+        #Busquedas Avanzadas
+        mejoresCLientes:[TopCliente]
+        mejoresVendedores:[TopVendedores]
+        buscarProductos(texto:String!):[Producto]
     
     }
 
