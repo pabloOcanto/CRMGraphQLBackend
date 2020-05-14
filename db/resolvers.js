@@ -26,9 +26,11 @@ const resolvers = {
     Query:{
 
         //Usuario
-        obtenerUsuario : async (_,{token})=> {
-            const usuarioId = await jwt.verify(token,process.env.CLAVE_SECRETA);
-            return usuarioId;
+        obtenerUsuario : async (_,{},ctx)=> {
+            //const usuarioId = await jwt.verify(token,process.env.CLAVE_SECRETA);
+            //const productos = await Usuario.find({});
+            console.log("obtener usuario ",ctx.usuario);
+            return ctx.usuario;
         },
 
         //Proudcto
@@ -118,7 +120,8 @@ const resolvers = {
         obtenerPedidosVendedor:async(_,{},ctx)=>{
 
             try {
-                const pedidos = await Pedido.find({vendedor:ctx.usuario.id});
+                const pedidos = await Pedido.find({vendedor:ctx.usuario.id}).populate("cliente");
+                console.log("pedidos",pedidos);
                 return pedidos;
             } catch (error) {
                 console.log(error);
@@ -425,6 +428,7 @@ const resolvers = {
 
                 // dar de alta el pedido
 
+
                 for await (const articulo of pedido){
 
                     const {id} = articulo;
@@ -477,21 +481,22 @@ const resolvers = {
                     throw new Error ("No tiene credenciales");
                 }
     
+                if (input.pedido){
+                    for await (const articulo of input.pedido){
     
-                for await (const articulo of input.pedido){
-    
-                    const {id} = articulo;
-                    const producto = await Producto.findById(id);
-    
-                    if (producto.existencia < articulo.cantidad){
-                        throw new Error(`No hay  cantidad suficiente para el articulo ${articulo.nombre}`);
-                    }else{
-                        producto.existencia = producto.existencia - articulo.cantidad;
-                        await producto.save();     
+                        const {id} = articulo;
+                        const producto = await Producto.findById(id);
+        
+                        if (producto.existencia < articulo.cantidad){
+                            throw new Error(`No hay  cantidad suficiente para el articulo ${articulo.nombre}`);
+                        }else{
+                            producto.existencia = producto.existencia - articulo.cantidad;
+                            await producto.save();     
+                        }
+        
                     }
-    
+        
                 }
-    
                 const nuevoPedido = await Pedido.findOneAndUpdate({_id:id},input,{new:true});
     
                 return nuevoPedido;
