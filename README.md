@@ -7,10 +7,10 @@ Backend com apollo server y MongoDB
 -   Otra variable llamada CLAVE_SECRETA y un clave para tener seguridad del sitio.
 
 ## Uso
+- Localmente eliminar el codigo ```port: process.env.PORT || 4000``` del archivo index.js
+-  Levanta el servidor con el comando npm run dev o npm run start
 
-Levanta el servidor con el comando npm run dev o npm run start
-
-En un browser tipear localhost:4000
+## En un browser tipear localhost:4000
 
 ### Como consumir los datos see :[graphql site](https://graphql.org/learn/queries/)
 ``` Actualizar Info
