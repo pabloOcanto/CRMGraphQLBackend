@@ -11,6 +11,9 @@ conectarDB();
 
 //servidor
 const server = new ApolloServer({
+    cors: {
+	origin: '*',// allow request from all domains
+	credentials: true},
     typeDefs,
     resolvers,
     context: ({req})=>{
